@@ -1,0 +1,10 @@
+{
+    "name": "吸猫助手",
+    "main": "main.js",
+    "ignore": [
+        "build"
+    ],
+    "packageName": "org.makerol",
+    "versionName": "1.0.0",
+    "versionCode": 1
+}
