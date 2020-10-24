@@ -11,28 +11,31 @@ const taskTableName = "赚喵币";
 // 定义任务关键字列表
 const browseTaskList = ["去浏览", "去逛逛", "去搜索"];    // 浏览类任务列表
 const clickTaskList = ["领取奖励", "去完成"];            // 点击类任务列表
-const taskBlackList = ["邀请", "淘宝特价版"];            // 子任务黑名单
+const taskBlackList = ["邀请好友", "组队", "淘宝特价版"];            // 子任务黑名单
 const textQiandaoBtn = ["点击领取","点可领"];
-// const taskDoneTextList = ["继续逛逛","任务完成","任务已经","任务已完成","全部完成啦"];    // 任务完成提示列表
-// const taskDoneTextStartList = ["已获得","今日已达上限"];  // 任务完成提示列表的开头
+
 
 // 设置全局变量
 var isRuning = false,
     isClicking = false,
     showConsole = false,
-    speed = 0;
+    speed = 1;
     catHeight = 0;                          // 定义猫位置的高度系数,我太难了，手工测量，不知道准不准
-    clickCatSpeed = 0;                      //设置撸猫速度
+    clickCatSpeed = 1000;                      //设置撸猫速度
 
 // 设置坐标的自动缩放
 setScreenMetrics(width, height);
-dialogs.alert("请确认无障碍和悬浮窗权限已开启，仅个人与好友使用，不承担意外传播任何后果，--- wudision0416");
-// 确认无障碍服务启动
-auto.waitFor();
+//dialogs.alert("请确认无障碍和悬浮窗权限已开启，仅个人与好友使用，不承担意外传播任何后果，--- wudision0416");
 // 确认悬浮窗权限
 checkFloaty();
+// 确认无障碍服务启动
+auto.waitFor();
 // 注册按键监听
 registEvent();
+//setSpeed();
+//setClickSpeed();
+// 打开活动页面
+launch1111TaskMain();
 
 // 启动悬浮窗
 threads.start(function () {
@@ -101,26 +104,23 @@ threads.start(function () {
     });
 });
 
-// 打开活动页面
-launch1111TaskMain();
-
 while (true) {
     // 任务未开始执行
     if (isRuning) {
         // 设置操作速度
         if (speed === 0) {
-            speed = setSpeed();
+            speed = 1;
         }
         openOrCloseTaskTable(true); // 进入任务列表页
         let taskDoneCnt = doingTask();
         if (taskDoneCnt == 0) {
-           console.log("任务貌似已经做完了\n如未完成，请重新点击【停止】->【开始】来运行");
+           console.log("任务貌似已经做完了\n如未完成，请重点击【停止】新进入后再点击【开始】来运行");
            waitForDone(20000); 
         }
     } else if (isClicking) {
         // 设置操作速度
         if (speed == 0) {
-            speed = setSpeed();
+            speed = 1;
         }
         openOrCloseTaskTable(false); // 回到活动主页
         // 获取 猫咪纵向位置
@@ -135,8 +135,9 @@ while (true) {
                 }
             })
         }
+ 
         if(clickCatSpeed == 0){
-            setClickSpeed();
+            clickCatSpeed = 1000;
         }
         click(width / 2, catHeight);
         waitForDone(clickCatSpeed); 
@@ -164,11 +165,18 @@ function checkFloaty() {
  * 打开双 11 活动页
  */
 function launch1111TaskMain() {
-    app.startActivity({
-        action: "android.intent.action.VIEW",
-        data: "taobao://pages.tmall.com/wow/z/hdwk/act-20201111/index?disableNav=YES",
-        packageName: "com.taobao.taobao",
-    });
+    //打开活动页面
+    console.log("正在打开淘宝");
+    app.launch("com.taobao.taobao");
+    waitForDone(1001);
+    console.log("正在等待进入天猫双11喵喵喵活动页面\n如果没有反应请手动进入");
+    className("android.view.View").desc("搜索").waitFor();
+    let search = className("android.view.View").desc("搜索").depth(12).findOne().bounds()
+    click(search.centerX(),search.centerY());
+    waitForDone(500);
+    id("searchEdit").findOne().setText("喵币");
+    waitForDone(500);
+    id("searchbtn").findOne().click()
     // 等待按键加载
     className("android.widget.Button").text(taskTableName).waitFor();
     waitForDone(1001);
@@ -208,7 +216,7 @@ function registEvent() {
  */
 function setSpeed() {
     while (true) {
-        let choose = dialogs.select("请根据你的手机性能(卡不卡)以及网速选择速度", "都挺好的,整个快速的 - 0.75", "一般吧,正常执行就好 - 1", "网速有点差,稍微慢点吧 - 1.25", "我手机很砖,整个最慢的吧 - 1.5");
+        let choose = dialogs.select("请根据你的手机性能(卡不卡)以及网速选择速度,默认为1", "都挺好的,整个快速的 - 0.75", "一般吧,正常执行就好 - 1", "网速有点差,稍微慢点吧 - 1.25", "我手机很砖,整个最慢的吧 - 1.5");
         switch (choose) {
             case -1:
                 toast("请选择");
@@ -236,10 +244,10 @@ function setSpeed() {
  */
 function setClickSpeed() {
     dialogs.build({
-        title: "请输入撸猫间隔(单位：ms),与运行速度叠加",
+        title: "请输入撸猫间隔(单位：ms)，默认为1秒,与运行速度叠加",
         positive: "确定",
         negative: "取消",
-        inputPrefill: "500"
+        inputPrefill: "1000"
     }).on("input", (text, dialog)=>{
         clickCatSpeed = parseInt(text);
         console.log("你设定的间隔是" + clickCatSpeed + "ms。")
@@ -305,8 +313,8 @@ function doingTask() {
             waitForDone(8001);
             swipe(width / 2, height - 500, width / 2, 0, random(801, 818) * speed);
             textContains("完成").findOne(random(10001, 10018) * speed);
-            taskCnt++;
             console.log("--------\n第" + (taskCnt + 1) + "个[" + task + "] 任务结束");
+            taskCnt++;
             waitForDone(601);
             back();
             // 等待
@@ -316,9 +324,9 @@ function doingTask() {
     })
     // 执行点击类任务
     clickTaskList.forEach(task => {
-        while (textContains(task).exists() && isRuning) {
-            let theSelector = text(task).findOnce();
-            let title = theSelector.parent().child(0).child(0).text();
+        let taskCollection = className("android.widget.Button").text(task).find();
+        taskCollection.forEach(childTask => {
+            let title = childTask.parent().child(0).child(0).text();
             console.log(title);
             if (!isInBlackList(title)) {
                 console.log("找到[" + task + "]任务");
@@ -328,7 +336,7 @@ function doingTask() {
             } else {
                 console.log("跳过[" + task + "]任务");
             }
-        }
+        })
     })
     return taskDoneCnt;
 }
